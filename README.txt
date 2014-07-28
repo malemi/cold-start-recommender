@@ -21,9 +21,9 @@ This means no batch computations.
 
     #!/usr/bin/env python
 
-    from csrec import ColdStartRecommender
+    from csrec import Recommender
 
-    engine = ColdStartRecommender()
+    engine = Recommender()
 
     # Insert Item with it properties (e.g. author, category...)
     engine.insert_item({'_id': 'an_item', 'author': 'The Author'})
