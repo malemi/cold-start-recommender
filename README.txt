@@ -21,9 +21,7 @@ This means no batch computations.
 
     #!/usr/bin/env python
 
-    from coldstartrec import ColdStartRecommender
-    import random
-    import math
+    from csrec import ColdStartRecommender
 
     engine = ColdStartRecommender()
 
