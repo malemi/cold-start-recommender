@@ -1,6 +1,15 @@
 import webapp2
 from csrec.Recommender import Recommender
 
+"""
+Usage:
+python recommender_api.py
+
+Start a webapp for testing the recommender.
+
+"""
+
+
 engine = Recommender()
 
 class MainPage(webapp2.RequestHandler):
