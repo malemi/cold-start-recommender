@@ -1,23 +1,20 @@
 from collections import defaultdict
 import pandas as pd
 import numpy as np
-from pymongo import MongoReplicaSetClient, MongoClient
 from time import time
 
-class ColdStartRecommender(object):
+class Recommender(object):
     """
-    ColdStartRecommender
+    Cold Start Recommender
     """
-    #TODO ensure indexes on users and items in items and users' tables
     def __init__(self, mongo_host=None, mongo_db_name=None, mongo_replica_set=None, default_rating=3, min_rating=1, max_rating=5):
         if mongo_host is not None:
+            from pymongo import MongoClient
             assert (mongo_db_name != None)
             if mongo_replica_set is not None:
+                from pymongo import MongoReplicaSetClient
                 mongo_client = MongoReplicaSetClient(mongo_host, replicaSet=mongo_replica_set)
                 self.db = mongo_client[mongo_db_name]
-                # reading --for producing recommendations-- could be even out of sync.
-                # this can be added if most replicas are in-memory
-                # self.db.read_preference = ReadPreference.SECONDARY_PREFERRED
             else:
                 mongo_client = MongoClient(mongo_host)
                 self.db = mongo_client[mongo_db_name]
@@ -32,7 +29,7 @@ class ColdStartRecommender(object):
         self.cooccurence_updated = 0.0
         self.item_ratings = defaultdict(dict)  # matrix of ratings for a item
         self.user_ratings = defaultdict(dict)  # matrix of ratings for a user
-        self.items = defaultdict(dict)  # matrix of item's information {item_id: {"cat1": "pippo"....}
+        self.items = defaultdict(dict)  # matrix of item's information {item_id: {"cat1": "my_cat"....}
         # categories --same as above, but separated as they are not always available
         self.tot_categories_user_ratings = defaultdict(lambda: defaultdict(lambda: defaultdict(int)))
         self.tot_categories_item_ratings = defaultdict(lambda: defaultdict(lambda: defaultdict(int)))
@@ -308,11 +305,8 @@ class ColdStartRecommender(object):
             if self.db['items'].find_one({"_id": item_id}):
                 item = self.db['items'].find_one({"_id": item_id})
                 if len(item_info) > 0:
-                    print 'ITEM INFO', item_info
                     for k, v in item.items():
-                        print 'K V', k, v
                         if k in item_info and v is not None:  # sometimes the value IS None
-                            print 'ENTER!!!'
                             users_coll_name = self._coll_name(k, 'user')
                             items_coll_name = self._coll_name(k, 'item')
                             self.info_used.add(k)
@@ -387,10 +381,8 @@ class ColdStartRecommender(object):
         else:  # read if from Mongodb
             if self.db['user_ratings'].find_one({"_id": user_id}):
                 item_based = True
-                #print list(self.db['user_ratings'].find())
                 #Take only user_id
                 df_user = pd.DataFrame.from_records(list(self.db['item_ratings'].find())).set_index('_id').fillna(0).astype(int)[[user_id]]
-                #print df_user
             if len(self.info_used) > 0 and False: #XXX
                 for i in self.info_used:
                     item_coll_name = self._coll_name(i, 'item')

@@ -13,21 +13,24 @@ characteristics:
 not cluster Users in any way (sex, age etc), nor use any content-related
 information to start with content-based recommendations
 
-* Fast. Any information on Users and Item should be stored and used immediately. 
-A rating by any User should improve recommendations for such User, but also for other Users.
-This means no batch computations.
+* Fast. Any information on Users and Item should be stored and used immediately. A rating by any User should improve recommendations for such User, but also for other Users. This means no batch computations.
 
 * Ready to use. It will provide a RESTful API to POST information and GET recommendations.
 
-    from csrec import Recommender
+    from csrec.Recommender import Recommender
 
     engine = Recommender()
 
     # Insert Item with it properties (e.g. author, category...)
+
     engine.insert_item({'_id': 'an_item', 'author': 'The Author'})
+
     # Insert rating, indicating wich property of the Item should be used for producing recs
+
     engine.insert_rating(user_id='a_user;, item_id='an_item', rating=4, item_info=['author'])
+
     # Insert rating, indicating that only the property should be used for recs (e.g. initial users' profiling)
+
     engine.insert_rating(user_id='another_user', item_id='an_item', rating=3, item_info=['author'], only_info=True)
 
 
@@ -45,6 +48,13 @@ Why using a replica set? Because you can have the primary DB in
 memory, and two other secondaries on disk. If the primary goes down,
 you still can use CSRec at lower performances, but without any data
 loss.
+
+Examples:
+
+	engine = Recommender()  # Start in-memory recommender for testing
+	engine = Recommender(mongo_host='localhost', mongo_db_name='my_cold_rec')  # ...with MongoDB, collections are created automatically
+	engine = Recommender(mongo_host='localhost', mongo_db_name='my_cold_rec', mongo_replica_set='recommender_replica')  # as above, with replica
+	
 
 The Cold Start Problem
 ----------------------
@@ -84,11 +94,17 @@ point, but you also register the item_id.
 updated as soon as a rating is inserted.
 
 4. Anonimous Users (e.g. random visitors of a website before sign up)
-migh give information, which would be recorded through their session
+might give information, which would be recorded through their session
 ID. After sign up/ sign in the information can be reconciled
 --information relative to the session ID is moved into the
 correspondent user ID entry.
 
+Mix Recommended with Popular Items
+----------------------------------
+
+What about users who would only receive a couple of recommended items?
+No problem! We'll fill the list with most popular items who were not
+recommended (nor rated by such user).
 
 Algorithms
 ----------
