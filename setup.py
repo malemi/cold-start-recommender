@@ -5,5 +5,5 @@ setup(name='cold-start-recommender',
       author='Mario Alemi',
       author_email='mario.alemi@gmail.com',
       version='0.1',
-      py_modules=['csrec', 'csrc.Recommender'],
+      py_modules=['csrec', 'csrec.Recommender'],
       )
