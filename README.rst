@@ -14,7 +14,7 @@ information to start with content-based recommendations
 
 * Fast. Any information on Users and Item should be stored and used immediately. A rating by any User should improve recommendations for such User, but also for other Users. This means no batch computations.
 
-* Ready to use. It will provide a RESTful API to POST information and GET recommendations.
+* Ready to use. Have a look at bin/recommender_api.py for starting a webapp to POST information and GET recommendations.
 
     from csrec.Recommender import Recommender
 
