@@ -5,11 +5,10 @@ Cold Start Recommender
 Cold Start Recommender (CSRec) is an easy to set up, fast, greedy
 recommender.
 
-We developed because we could not find any recommender we could
-use for providing recommendations to a project with the following
+We developed it because we needed a recommender with the following
 characteristics:
 
-* Cold. No previous data on Items nor Users available. This means we could
+* Cold. No previous data on Items or Users available. This means we could
 not cluster Users in any way (sex, age etc), nor use any content-related
 information to start with content-based recommendations
 
@@ -40,14 +39,15 @@ Features
 Persistence
 -----------
 
-You can use CSRec in-memory, but, of course, only for testing. CSrec
-at the moment can easily use MongoDB for persistence or, even better a
-MongoDB replica set.
+You can use CSRec purely in-memory for testing or with MongoDB, which
+you can install on a tmpfs filesystem created in your RAM (on Linux,
+see
+http://edgystuff.tumblr.com/post/49304254688/how-to-use-mongodb-as-a-pure-in-memory-db-redis-style). If using a RAM partition, please make a replica set!
 
-Why using a replica set? Because you can have the primary DB in
+(Why using a replica set? Because you can have the primary DB in
 memory, and two other secondaries on disk. If the primary goes down,
 you still can use CSRec at lower performances, but without any data
-loss.
+loss.)
 
 Examples:
 
