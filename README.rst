@@ -1,23 +1,28 @@
-======================
-Cold Start Recommender
-======================
+*********************************************************************
+Cold Start Recommender: easy, fast, greed recommender to avoid the cold start
+*********************************************************************
 
-Cold Start Recommender (CSRec) is an easy to set up, fast, greedy
-recommender.
+Cold Start Recommender was developed because we needed a recommender
+with the following characteristics:
 
-We developed it because we needed a recommender with the following
-characteristics:
+* **Greedy.** No previous data on Items or Users available, therefore
+    *any* information should be used --not just which Item a User
+    likes, but also --in case of a book-- the correspondend category,
+    author etc.
 
-* Cold. No previous data on Items or Users available. This means we could
-not cluster Users in any way (sex, age etc), nor use any content-related
-information to start with content-based recommendations
+* **Fast.** Any information on Users and Item should be stored and
+    used immediately. A rating by any User should improve
+    recommendations for such User, but also for other Users. This
+    means no batch computations, and in-memory database.
 
-* Fast. Any information on Users and Item should be stored and used immediately. A rating by any User should improve recommendations for such User, but also for other Users. This means no batch computations.
+* **Ready to use.** Have a look at bin/recommender_api.py for starting
+    a webapp to POST information and GET recommendations.
 
-* Ready to use. Have a look at bin/recommender_api.py for starting a webapp to POST information and GET recommendations.
+A simple script
+---------------
 
     from csrec.Recommender import Recommender
-
+    
     engine = Recommender()
 
     # Insert Item with it properties (e.g. author, category...)
@@ -52,7 +57,9 @@ loss.)
 Examples:
 
 	engine = Recommender()  # Start in-memory recommender for testing
+	
 	engine = Recommender(mongo_host='localhost', mongo_db_name='my_cold_rec')  # ...with MongoDB, collections are created automatically
+	
 	engine = Recommender(mongo_host='localhost', mongo_db_name='my_cold_rec', mongo_replica_set='recommender_replica')  # as above, with replica
 	
 
@@ -86,18 +93,17 @@ co-occurence matrix is often too sparse to build any decent
 recommendation. In this way you start building multiple, denser,
 co-occurence matrices and use them from the beginning.
 
-2. Any information is used. You decide which information you should
+2. **Any information is used.** You decide which information you should
 record about a User rating an Item. This is similar to the previous
 point, but you also register the item_id.
 
-3. Any information is used *immediately*. The co-occurence matrix is
+3. **Any information is used *immediately*.** The co-occurence matrix is
 updated as soon as a rating is inserted.
 
-4. Anonimous Users (e.g. random visitors of a website before sign up)
-might give information, which would be recorded through their session
-ID. After sign up/ sign in the information can be reconciled
---information relative to the session ID is moved into the
-correspondent user ID entry.
+4. **It tracks anonimous users,** e.g. random visitors of a website
+before the sign in/ sign up process. After sign up/ sign in the
+information can be reconciled --information relative to the session ID
+is moved into the correspondent user ID entry.
 
 Mix Recommended with Popular Items
 ----------------------------------
