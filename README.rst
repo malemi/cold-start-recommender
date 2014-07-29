@@ -18,6 +18,27 @@ with the following characteristics:
 * **Ready to use.** Have a look at bin/recommender_api.py for starting
     a webapp to POST information and GET recommendations.
 
+
+CSRec should not (yet) be used for production system, but only for
+pilots, where statistics is so low that any filter (e.g. loglikelihood
+filter on the co-occurence matrix) do not make yet sense. It aims at
+*gather data* providing a recommendation experience.
+
+TODO Future releases will include state of the art algorithms (about
+October 2014, a few months before our product is supposed to go
+public).
+
+CSRec is written in Python, and under the hood it uses the `Pandas`_
+library. 
+
+**Table of Contents**
+
+.. contents::
+    :local:
+    :depth: 1
+    :backlinks: none
+
+
 A simple script
 ---------------
 
@@ -121,3 +142,4 @@ provide recommendations in less than 200msec for a matrix of about
 10,000 items.
 
  
+.. _Pandas: http://pandas.pydata.org
