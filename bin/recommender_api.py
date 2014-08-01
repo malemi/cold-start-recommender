@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 import webapp2
 from csrec.Recommender import Recommender
 
@@ -18,6 +19,10 @@ class MainPage(webapp2.RequestHandler):
         self.response.out.write('Cold Start Recommender v. ' + str(csrec.__version__))
 
 class InsertRating(webapp2.RequestHandler):
+    """
+    e.g.:
+    curl -X POST  'localhost:8081/insertrating?item=Book1&user=User1&rating=4'
+    """
     def post(self):
         global engine
         user = self.request.get('user')
@@ -28,18 +33,21 @@ class InsertRating(webapp2.RequestHandler):
 class InsertItem(webapp2.RequestHandler):
     """
     e.g.:
-    insertitem?id=Book1&author=TheAuthor&cathegory=Horror
+    curl -X POST  'localhost:8081/insertitem?id=Book1&author=TheAuthor&cathegory=Horror'
     """
     def post(self):
         global engine
         item = {}
         for i in self.request.params.items():
             item[i[0]] = i[1]
-        self.response.write(item)
+        #self.response.write(item)
         engine.insert_item(item, _id='id')
         
 
 class Recommend(webapp2.RequestHandler):
+    """
+    curl -X GET  'localhost:8081/recommend?user=User1'
+    """
     def get(self):
         global engine
         user = self.request.get('user')
@@ -55,6 +63,9 @@ class Reconcile(webapp2.RequestHandler):
         engine.reconcile(old, new)
 
 class Info(webapp2.RequestHandler):
+    """
+    curl -X GET  'localhost:8081/info?user=User1'
+    """
     def get(self):
         global engine
         user = self.request.get('user')

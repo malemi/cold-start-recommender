@@ -9,7 +9,7 @@ class Recommender(object):
     Cold Start Recommender
     """
     def __init__(self, mongo_host=None, mongo_db_name=None, mongo_replica_set=None,
-                 default_rating=3, 
+                 default_rating=3, max_rating=5,
                  log_level=logging.ERROR):
         if mongo_host is not None:
             assert (mongo_db_name != None)
@@ -31,12 +31,14 @@ class Recommender(object):
             self.db = None
         self.info_used = set() # Info used in addition to item_id. Only for in-memory testing, otherwise there is utils collection in the MongoDB
         self.default_rating = default_rating  # Rating inserted by default
+        self.max_rating = max_rating
         self._items_cooccurence = pd.DataFrame  # cooccurrence of items
         self._categories_cooccurence = {} # cooccurrence of categories
         self.cooccurence_updated = 0.0  # Time of update
         self.item_ratings = defaultdict(dict)  # matrix of ratings for a item (inmemory testing)
         self.user_ratings = defaultdict(dict)  # matrix of ratings for a user (inmemory testing)
         self.items = defaultdict(dict)  # matrix of item's information {item_id: {"Author": "AA. VV."....}
+        self.item_id_key = 'id'
         # categories --same as above, but separated as they are not always available
         self.tot_categories_user_ratings = defaultdict(lambda: defaultdict(lambda: defaultdict(int)))  # sum of all ratings  (inmemory testing)
         self.tot_categories_item_ratings = defaultdict(lambda: defaultdict(lambda: defaultdict(int)))  # ditto
@@ -67,8 +69,8 @@ class Recommender(object):
             # Items' vectors
             df_item = pd.DataFrame(self.item_ratings).fillna(0).astype(int)
             # Categories' vectors
-            if len(self.info_used) > 0:
-                info_used = self.info_used
+            info_used = self.info_used
+            if len(info_used) > 0:
                 for i in info_used:
                     df_tot_cat_item[i] = pd.DataFrame(self.tot_categories_item_ratings[i]).fillna(0).astype(int)
         else:  # read if from Mongodb
@@ -132,6 +134,7 @@ class Recommender(object):
         :param item: {_id: item_id, cat1: ...} or {item_id_key: item_id, cat1: ....}
         :return: None
         """
+        self.item_id_key = _id
         if not self.db:
             self.items[item[_id]] = item
         else:
@@ -257,7 +260,10 @@ class Recommender(object):
         if len(pop_items) >= max_items:
             self.items_by_popularity = pop_items
         else:
-            all_items = set([ d["_id"] for d in self.db['items'].find({}, {"_id": 1})])
+            if not self.db:
+                all_items = set(self.items.keys())
+            else:
+                all_items = set([ d["_id"] for d in self.db['items'].find({}, {"_id": 1})])
             self.items_by_popularity = pop_items + list( all_items - set(pop_items) )
 
     def get_similar_item(self, item_id, user_id=None, algorithm='simple'):

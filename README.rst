@@ -1,7 +1,7 @@
-*********************************************************************
-Cold Start Recommender: easy, fast, greed recommender to avoid the cold start
-*********************************************************************
-
+****************************************************
+Easy, fast, greed recommender to avoid a cold start
+****************************************************
+        
 Cold Start Recommender was developed because we needed a recommender
 with the following characteristics:
 
@@ -141,5 +141,21 @@ At the moment CSRec only provides purely item-based recommendations
 provide recommendations in less than 200msec for a matrix of about
 10,000 items.
 
- 
+
+Versions
+--------
+
+**v 3.7**
+
+Bug fixing for in-memory
+
+**v 3.5**
+
+* Added logging
+* Added creation of collections for super-cold start (not even one rating, and still user asking for recommendations...)
+* Additional info used for recommendations (eg Authors etc) are now stored in the DB
+* _sync_user_item_ratings now syncs addition info's collections too
+* popular_items now are always returned, even in case of no rating done, and get_recommendations eventually adjusts the order if some profiling has been done 
+
+
 .. _Pandas: http://pandas.pydata.org
