@@ -98,7 +98,6 @@ class Recommender(object):
         It might happen that the user_ratings and the item_ratings
         are not aligned. It shouldn't, but with users can be profiled,
         then reconciled with session_id etc, it happened...
-        THIS SHOULD BE LOGGED AS ERROR!
         :return:
         """
         #Doing that only for the mongodb case..
@@ -465,10 +464,21 @@ class Recommender(object):
                     item_coll_name = self._coll_name(i, 'item')
                     user_coll_name = self._coll_name(i, 'user')
                     if self.db['tot_' + user_coll_name].find_one({"_id": user_id}):
-                        info_based.append(i)
-                        df_tot_cat_user[i] = pd.DataFrame.from_records(list(self.db['tot_' + item_coll_name].find())).set_index('_id').fillna(0).astype(int)[[user_id]]
-                        df_n_cat_user[i] = pd.DataFrame.from_records(list(self.db['n_' + item_coll_name].find())).set_index('_id').fillna(0).astype(int)[[user_id]]
-                        self.logger.debug("[get_recommendations]. df_tot_cat_user[%s]:%s\n", i, df_tot_cat_user[i])
+                        try:
+                            info_based.append(i)
+                            self.logger.debug("[get_recommendations] pd.DataFrame.from_records(list(db['tot_' + '%s'].find())).set_index('_id').fillna(0).astype(int)[['%s']]", item_coll_name, user_id)
+                            df_tot_cat_user[i] = pd.DataFrame.from_records(list(self.db['tot_' + item_coll_name].find())).set_index('_id').fillna(0).astype(int)[[user_id]]
+                            df_n_cat_user[i] = pd.DataFrame.from_records(list(self.db['n_' + item_coll_name].find())).set_index('_id').fillna(0).astype(int)[[user_id]]
+                            self.logger.debug("[get_recommendations]. df_tot_cat_user[%s]:%s\n", i, df_tot_cat_user[i])
+                        except:
+                            self.logger.warning("[get_recommendations. item and user ratings colls not synced for %s", i)
+                            self._sync_user_item_ratings()
+                            info_based.append(i)
+                            self.logger.debug("[get_recommendations] pd.DataFrame.from_records(list(db['tot_' + '%s'].find())).set_index('_id').fillna(0).astype(int)[['%s']]", item_coll_name, user_id)
+                            df_tot_cat_user[i] = pd.DataFrame.from_records(list(self.db['tot_' + item_coll_name].find())).set_index('_id').fillna(0).astype(int)[[user_id]]
+                            df_n_cat_user[i] = pd.DataFrame.from_records(list(self.db['n_' + item_coll_name].find())).set_index('_id').fillna(0).astype(int)[[user_id]]
+                            self.logger.debug("[get_recommendations]. df_tot_cat_user[%s]:%s\n", i, df_tot_cat_user[i])
+
         if item_based:
             try:
                 # this might fail for fast in case a user has rated an item
