@@ -14,12 +14,14 @@ class Recommender(object):
         if mongo_host is not None:
             assert (mongo_db_name != None)
             if mongo_replica_set is not None:
+                from pymongo import MongoReplicaSetClient
                 mongo_client = MongoReplicaSetClient(mongo_host, replicaSet=mongo_replica_set)
                 self.db = mongo_client[mongo_db_name]
                 # reading --for producing recommendations-- could be even out of sync.
                 # this can be added if most replicas are in-memory
                 # self.db.read_preference = ReadPreference.SECONDARY_PREFERRED
             else:
+                from pymongo import MongoClient
                 mongo_client = MongoClient(mongo_host)
                 self.db = mongo_client[mongo_db_name]
             # If these tables do not exist, it might create problems
