@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 from time import time
 import logging
+import json
 
 class Recommender(object):
     """
@@ -131,7 +132,8 @@ class Recommender(object):
 
     def insert_item(self, item, _id="_id"):
         """
-        Insert the whole document either in self.items or in db.items
+        Insert the whole document either in self.items or in db.items.
+        self.items is a nested dict {_id: dict(item), ....}
         :param item: {_id: item_id, cat1: ...} or {item_id_key: item_id, cat1: ....}
         :return: None
         """
@@ -341,6 +343,11 @@ class Recommender(object):
                     for k,v in item.items():
                         if k in item_info:
                             # Some items' attributes are lists (e.g. tags: [])
+                            # or, worse, string which can represent lists...
+                            try:
+                                v = json.loads(v.replace("'", '"'))
+                            except:
+                                pass
                             if not hasattr(v, '__iter__'):
                                 values = [v]
                             else:
@@ -391,6 +398,10 @@ class Recommender(object):
                                                     upsert=True)
 
                             # Some items' attributes are lists (e.g. tags: [])
+                            try:
+                                v = json.loads(v.replace("'", '"'))
+                            except:
+                                pass
                             if not hasattr(v, '__iter__'):
                                 values = [v]
                             else:
@@ -597,3 +608,27 @@ class Recommender(object):
             return r if r else {}
         else:
             return self.user_ratings[user_id]
+
+
+    def get_items(self, n=10):
+        """
+        Return n items
+        :param n: number of items
+        :return:
+        """
+        if self.db:
+            items = self.db['items'].find()
+            result = []
+            for it in items:
+                result.append(it)
+                if len(result) > n:
+                    break
+            return result
+
+        else:
+            result = []
+            for k in self.items.keys():
+                result.append(self.items[k])
+                if len(result) > n:
+                    break
+            return result
