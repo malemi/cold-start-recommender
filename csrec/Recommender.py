@@ -269,6 +269,7 @@ class Recommender(object):
 
     def get_similar_item(self, item_id, user_id=None, algorithm='simple'):
         """
+        TODO
         Simple: return the row of the co-occurence matrix ordered by score or,
         if user_id is not None, multiplied times the user_id rating
         (not transposed!) so to weigh the similarity score with the
@@ -339,6 +340,11 @@ class Recommender(object):
                 if len(item_info) > 0:
                     for k,v in item.items():
                         if k in item_info:
+                            # Some items' attributes are lists (e.g. tags: [])
+                            if not hasattr(v, '__iter__'):
+                                values = [v]
+                            else:
+                                values = v
                             self.info_used.add(k)
                             # we cannot set the rating, because we want to keep the info
                             # that a user has read N books of, say, the same author,
@@ -350,12 +356,14 @@ class Recommender(object):
                             # 1) we don't want ratings for category to skyrocket, so we have to take the average
                             # 2) if a user changes their idea on rating a book, it should not add up. Average
                             #   is not perfect, but close enough. Take total number of ratings and total rating
-                            self.tot_categories_user_ratings[k][user_id][v] += int(rating)
-                            self.n_categories_user_ratings[k][user_id][v] += 1
-                            # for the co-occurence matrix is not necessary to do the same for item, but better do it
-                            # in case we want to compute similarities etc using categories
-                            self.tot_categories_item_ratings[k][v][user_id] += int(rating)
-                            self.n_categories_item_ratings[k][v][user_id] += 1
+                            for v in values:
+                                self.tot_categories_user_ratings[k][user_id][v] += int(rating)
+                                self.n_categories_user_ratings[k][user_id][v] += 1
+                                # for the co-occurence matrix is not necessary to do the same for item, but better do it
+                                # in case we want to compute similarities etc using categories
+                                self.tot_categories_item_ratings[k][v][user_id] += int(rating)
+                                self.n_categories_item_ratings[k][v][user_id] += 1
+
             else:
                 self.insert_item({"_id": item_id})
             # Do item always, at least is for categories profiling
@@ -372,7 +380,8 @@ class Recommender(object):
                     self.logger.debug('[insert_rating] Looking for the following info: %s', item_info)
                     for k, v in item.items():
                         if k in item_info and v is not None:  # sometimes the value IS None
-                            self.logger.debug("[insert_rating] Adding %sto info_used and create relative collections", k)
+                            self.logger.debug("[insert_rating] Adding %sto info_used and create relative collections",
+                                              k)
 
                             users_coll_name = self._coll_name(k, 'user')
                             items_coll_name = self._coll_name(k, 'item')
@@ -380,24 +389,32 @@ class Recommender(object):
                             self.db['utils'].update({"_id": 1},
                                                     {"$addToSet": {'info_used': k}},
                                                     upsert=True)
+
+                            # Some items' attributes are lists (e.g. tags: [])
+                            if not hasattr(v, '__iter__'):
+                                values = [v]
+                            else:
+                                values = v
+
                             # see comments above
-                            self.db['tot_' + users_coll_name].update({'_id': user_id},
-                                                                     {'$inc': {v: float(rating)}},
-                                                                      upsert=True)
-                            self.db['n_' + users_coll_name].update({'_id': user_id},
-                                           {'$inc': {v: 1}},
-                                            upsert=True)
-                            self.db['tot_' + items_coll_name].update({'_id': v},
-                                           {'$inc': {user_id: float(rating)}},
-                                            upsert=True)
-                            self.db['n_' + items_coll_name].update({'_id': v},
-                                           {'$inc': {user_id: 1}},
-                                            upsert=True)
-                            self.db['items'].update(
-                                {"_id": item_id},
-                                {"$set": {k: v}},
-                                upsert=True
-                            )
+                            for v in values:
+                                self.db['tot_' + users_coll_name].update({'_id': user_id},
+                                                                         {'$inc': {v: float(rating)}},
+                                                                          upsert=True)
+                                self.db['n_' + users_coll_name].update({'_id': user_id},
+                                               {'$inc': {v: 1}},
+                                                upsert=True)
+                                self.db['tot_' + items_coll_name].update({'_id': v},
+                                               {'$inc': {user_id: float(rating)}},
+                                                upsert=True)
+                                self.db['n_' + items_coll_name].update({'_id': v},
+                                               {'$inc': {user_id: 1}},
+                                                upsert=True)
+                                self.db['items'].update(
+                                    {"_id": item_id},
+                                    {"$set": {k: v}},
+                                    upsert=True
+                                )
             else:
                 self.insert_item({"_id": item_id})  # Obviously there won't be categories...
 
@@ -456,7 +473,7 @@ class Recommender(object):
                 try:
                     df_user = pd.DataFrame.from_records(list(self.db['item_ratings'].find())).set_index('_id').fillna(0).astype(int)[[user_id]]
                 except:
-                    self.logger.warning("[get_recommendations. item and user ratings colls not synced")
+                    self.logger.warning("[get_recommendations] item and user ratings colls not synced")
                     self._sync_user_item_ratings()
                     df_user = pd.DataFrame.from_records(list(self.db['item_ratings'].find())).set_index('_id').fillna(0).astype(int)[[user_id]]
             info_used = self.db['utils'].find_one({"_id": 1}, {'info_used': 1, "_id": 0}).get('info_used', [])
