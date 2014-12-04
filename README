@@ -1,5 +1,5 @@
 ****************************************************
-Easy, fast, greed recommender to avoid a cold start
+Easy, fast, greedy recommender to avoid a cold start
 ****************************************************
         
 "Will it scale?" is a less important question than "will it ever matter?" [kadavy.net]
@@ -7,10 +7,10 @@ Easy, fast, greed recommender to avoid a cold start
 We developed Cold Start Recommender because we needed a recommender
 with the following characteristics:
 
-* **Greedy.** Useful in situations where no previous data on Items or Users are available, therefore
-    *any* information must be used --not just which Item a User
-    likes, but also --in the case of a book-- the corresponding category,
-    author etc.
+* **Greedy.** Useful in situations where no previous data on Items or
+    Users are available, therefore *any* information must be used
+    --not just which Item a User likes, but also --in the case of a
+    book-- the corresponding category, author etc.
 
 * **Fast.** Any information on Users and Item should be stored and
     used immediately. A rating by any User should improve
