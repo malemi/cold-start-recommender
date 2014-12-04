@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import webapp2
 from csrec.Recommender import Recommender
+import csrec
 
 """
 Usage:
@@ -16,7 +17,8 @@ engine = Recommender()
 class MainPage(webapp2.RequestHandler):
     def get(self):
         self.response.headers['Content-Type'] = 'text/plain'
-        self.response.out.write('Cold Start Recommender v. ' + str(csrec.__version__))
+        self.response.out.write("Cold Start Recommender v. " + str(csrec.__version__) + "\n")
+
 
 class InsertRating(webapp2.RequestHandler):
     """
@@ -29,6 +31,7 @@ class InsertRating(webapp2.RequestHandler):
         item = self.request.get('item')
         rating = self.request.get('rating')
         engine.insert_rating(user, item, rating)
+
 
 class InsertItem(webapp2.RequestHandler):
     """
@@ -55,12 +58,14 @@ class Recommend(webapp2.RequestHandler):
         fast = self.request.get('fast', False)
         self.response.write(engine.get_recommendations(user, max_recs=max_recs, fast=fast))
 
+
 class Reconcile(webapp2.RequestHandler):
     def post(self):
         global engine
         old = self.request.get('old')
         new = self.request.get('new')
         engine.reconcile(old, new)
+
 
 class Info(webapp2.RequestHandler):
     """
@@ -72,6 +77,16 @@ class Info(webapp2.RequestHandler):
         self.response.write(engine.get_user_info(user))
         
 
+class GetItems(webapp2.RequestHandler):
+    """
+    curl -X GET  'localhost:8081/items?n=10'
+    """
+    def get(self):
+        global engine
+        n = self.request.get('n')
+        self.response.write(engine.get_items())
+
+
 app = webapp2.WSGIApplication([
     ('/', MainPage),
     ('/insertrating', InsertRating),
@@ -79,6 +94,7 @@ app = webapp2.WSGIApplication([
     ('/recommend', Recommend),
     ('/reconcile', Reconcile),
     ('/info', Info),
+    ('/items', GetItems),
 ], debug=True)
 
 def main():
