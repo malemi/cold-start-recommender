@@ -49,12 +49,12 @@ A simple script
     engine = Recommender()
 
     # Insert Item with it properties (e.g. author, category...)
-
-    engine.insert_item({'_id': 'an_item', 'author': 'The Author'})
+    # NB lists can be passed as json-parseable strings
+    engine.insert_item({'_id': 'an_item', 'author': 'The Author', 'tags': '["nice", "good"]'})
 
     # Insert rating, indicating wich property of the Item should be used for producing recs
 
-    engine.insert_rating(user_id='a_user;, item_id='an_item', rating=4, item_info=['author'])
+    engine.insert_rating(user_id='a_user;, item_id='an_item', rating=4, item_info=['author', 'tags'])
 
     # Insert rating, indicating that only the property should be used for recs (e.g. initial users' profiling)
 
@@ -145,6 +145,15 @@ provide recommendations in less than 200msec for a matrix of about
 
 Versions
 --------
+
+**v 3.10**
+
+* Categories can now be lists (or passed as string which are json-parseable as list).
+  This is important for, eg, tags which can now be passed in a REST API as:
+
+      curl -X POST "http://127.0.0.1:8081/insertitem?id=Boo2&author=TheAuthor&cathegory=Horror&tags=['mio','nostro']"
+
+* Fixed bug in recommender_api example file
 
 **v 3.8**
 
