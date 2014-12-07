@@ -50,9 +50,13 @@ class Recommender(object):
         self.items_by_popularity = []
         self.items_by_popularity_updated = 0.0  # Time of update
         # Loggin stuff
-
-        self.logger = logging.getLogger('CSREC')
-        self.logger.setLevel(log_level)
+        self.logger = logging.getLogger("csrc")
+        self.logger.setLevel(logging.DEBUG)
+        self.ch = logging.StreamHandler()
+        self.ch.setLevel(logging.DEBUG)
+        self.formatter = logging.Formatter("%(message)s")
+        self.ch.setFormatter(self.formatter)
+        self.logger.addHandler(self.ch)
         self.logger.debug("============ Creating a Recommender Instance ================")
 
     def _coll_name(self, k, typ):
@@ -364,12 +368,13 @@ class Recommender(object):
                             # 2) if a user changes their idea on rating a book, it should not add up. Average
                             #   is not perfect, but close enough. Take total number of ratings and total rating
                             for v in values:
-                                self.tot_categories_user_ratings[k][user_id][v] += int(rating)
-                                self.n_categories_user_ratings[k][user_id][v] += 1
-                                # for the co-occurence matrix is not necessary to do the same for item, but better do it
-                                # in case we want to compute similarities etc using categories
-                                self.tot_categories_item_ratings[k][v][user_id] += int(rating)
-                                self.n_categories_item_ratings[k][v][user_id] += 1
+                                if len(str(v)) > 0:
+                                    self.tot_categories_user_ratings[k][user_id][v] += int(rating)
+                                    self.n_categories_user_ratings[k][user_id][v] += 1
+                                    # for the co-occurence matrix is not necessary to do the same for item, but better do it
+                                    # in case we want to compute similarities etc using categories
+                                    self.tot_categories_item_ratings[k][v][user_id] += int(rating)
+                                    self.n_categories_item_ratings[k][v][user_id] += 1
 
             else:
                 self.insert_item({"_id": item_id})
@@ -387,7 +392,7 @@ class Recommender(object):
                     self.logger.debug('[insert_rating] Looking for the following info: %s', item_info)
                     for k, v in item.items():
                         if k in item_info and v is not None:  # sometimes the value IS None
-                            self.logger.debug("[insert_rating] Adding %sto info_used and create relative collections",
+                            self.logger.debug("[insert_rating] Adding %s to info_used and create relative collections",
                                               k)
 
                             users_coll_name = self._coll_name(k, 'user')
@@ -403,29 +408,30 @@ class Recommender(object):
                             except:
                                 pass
                             if not hasattr(v, '__iter__'):
-                                values = [v]
+                                values = [str(v)]
                             else:
-                                values = v
+                                values = [str(i) for i in v]  # It's going to be a key, no numbers
 
                             # see comments above
                             for v in values:
-                                self.db['tot_' + users_coll_name].update({'_id': user_id},
-                                                                         {'$inc': {v: float(rating)}},
-                                                                          upsert=True)
-                                self.db['n_' + users_coll_name].update({'_id': user_id},
-                                               {'$inc': {v: 1}},
-                                                upsert=True)
-                                self.db['tot_' + items_coll_name].update({'_id': v},
-                                               {'$inc': {user_id: float(rating)}},
-                                                upsert=True)
-                                self.db['n_' + items_coll_name].update({'_id': v},
-                                               {'$inc': {user_id: 1}},
-                                                upsert=True)
-                                self.db['items'].update(
-                                    {"_id": item_id},
-                                    {"$set": {k: v}},
-                                    upsert=True
-                                )
+                                if len(v) > 0:
+                                    self.db['tot_' + users_coll_name].update({'_id': user_id},
+                                                                             {'$inc': {v: float(rating)}},
+                                                                              upsert=True)
+                                    self.db['n_' + users_coll_name].update({'_id': user_id},
+                                                   {'$inc': {v: 1}},
+                                                    upsert=True)
+                                    self.db['tot_' + items_coll_name].update({'_id': v},
+                                                   {'$inc': {user_id: float(rating)}},
+                                                    upsert=True)
+                                    self.db['n_' + items_coll_name].update({'_id': v},
+                                                   {'$inc': {user_id: 1}},
+                                                    upsert=True)
+                                    self.db['items'].update(
+                                        {"_id": item_id},
+                                        {"$set": {k: v}},
+                                        upsert=True
+                                    )
             else:
                 self.insert_item({"_id": item_id})  # Obviously there won't be categories...
 
