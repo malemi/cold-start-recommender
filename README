@@ -54,7 +54,7 @@ A simple script
 
     # Insert rating, indicating wich property of the Item should be used for producing recs
 
-    engine.insert_rating(user_id='a_user;, item_id='an_item', rating=4, item_info=['author', 'tags'])
+    engine.insert_rating(user_id='a_user', item_id='an_item', rating=4, item_info=['author', 'tags'])
 
     # Insert rating, indicating that only the property should be used for recs (e.g. initial users' profiling)
 
