@@ -52,11 +52,6 @@ class Recommender(object):
         # Loggin stuff
         self.logger = logging.getLogger("csrc")
         self.logger.setLevel(logging.DEBUG)
-        self.ch = logging.StreamHandler()
-        self.ch.setLevel(logging.DEBUG)
-        self.formatter = logging.Formatter("%(message)s")
-        self.ch.setFormatter(self.formatter)
-        self.logger.addHandler(self.ch)
         self.logger.debug("============ Creating a Recommender Instance ================")
 
     def _coll_name(self, k, typ):
