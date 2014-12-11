@@ -53,6 +53,12 @@ class Recommender(object):
         self.logger = logging.getLogger("csrc")
         self.logger.setLevel(logging.DEBUG)
         self.logger.debug("============ Creating a Recommender Instance ================")
+        if mongo_host is not None:
+            self.logger.debug("============ Host: %s", str(mongo_host))
+            if mongo_replica_set is not None:
+                self.logger.debug("============ Replica: %s", str(mongo_replica_set))
+
+
 
     def _coll_name(self, k, typ):
         """
