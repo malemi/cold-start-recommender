@@ -494,7 +494,10 @@ class Recommender(object):
                     self.logger.warning("[get_recommendations] item and user ratings colls not synced")
                     self._sync_user_item_ratings()
                     df_user = pd.DataFrame.from_records(list(self.db['item_ratings'].find())).set_index('_id').fillna(0).astype(int)[[user_id]]
-            info_used = self.db['utils'].find_one({"_id": 1}, {'info_used': 1, "_id": 0}).get('info_used', [])
+            try:
+                info_used = self.db['utils'].find_one({"_id": 1}, {'info_used': 1, "_id": 0}).get('info_used', [])
+            except:
+                info_used = []
             self.logger.debug("[get_recommendations] info_used: %s", info_used)
             if len(info_used) > 0:
                 for i in info_used:
