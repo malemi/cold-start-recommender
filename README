@@ -146,6 +146,10 @@ provide recommendations in less than 200msec for a matrix of about
 Versions
 --------
 
+**v 3.12**
+
+* Bug fixed
+
 **v 3.11**
 
 * Some debugs messsages added
