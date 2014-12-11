@@ -146,6 +146,10 @@ provide recommendations in less than 200msec for a matrix of about
 Versions
 --------
 
+**v 3.11**
+
+* Some debugs messsages added
+
 **v 3.10**
 
 * Categories can now be lists (or passed as string which are json-parseable as list).
