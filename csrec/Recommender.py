@@ -16,15 +16,22 @@ class Recommender(object):
             assert (mongo_db_name != None)
             if mongo_replica_set is not None:
                 from pymongo import MongoReplicaSetClient
-                mongo_client = MongoReplicaSetClient(mongo_host, replicaSet=mongo_replica_set)
-                self.db = mongo_client[mongo_db_name]
+                self.mongo_host = mongo_host
+                self.mongo_replica_set = mongo_replica_set
+                self.mongo_db_name = mongo_db_name
+                self.mongo_client = MongoReplicaSetClient(self.mongo_host,
+                                                          replicaSet=self.mongo_replica_set)
+                self.db = self.mongo_client[self.mongo_db_name]
                 # reading --for producing recommendations-- could be even out of sync.
                 # this can be added if most replicas are in-memory
                 # self.db.read_preference = ReadPreference.SECONDARY_PREFERRED
             else:
                 from pymongo import MongoClient
-                mongo_client = MongoClient(mongo_host)
-                self.db = mongo_client[mongo_db_name]
+                self.mongo_host = mongo_host
+                self.mongo_replica_set = mongo_replica_set
+                self.mongo_db_name = mongo_db_name
+                self.mongo_client = MongoClient(self.mongo_host)
+                self.db = self.mongo_client[self.mongo_db_name]
             # If these tables do not exist, it might create problems
             if not self.db['user_ratings'].find_one():
                 self.db['user_ratings'].insert({})
@@ -84,7 +91,10 @@ class Recommender(object):
         else:  # read if from Mongodb
             # here we *must* use user_ratings, so indexes are the users, columns the items...
             df_item = pd.DataFrame.from_records(list(self.db['user_ratings'].find())).set_index('_id').fillna(0).astype(int)
-            info_used = self.db['utils'].find_one({"_id": 1}, {'info_used': 1, "_id": 0}).get('info_used', [])
+            try:
+                info_used = self.db['utils'].find_one({"_id": 1}, {'info_used': 1, "_id": 0}).get('info_used', [])
+            except:
+                info_used = []
             self.logger.info("[_create_cooccurence] Found info_used in db.utils: %s", info_used)
             if len(info_used) > 0:
                 for i in info_used:
@@ -210,7 +220,10 @@ class Recommender(object):
                 multi=True
             )
 
-            info_used = self.db['utils'].find_one({"_id": 1}, {'info_used': 1, "_id": 0}).get('info_used', [])
+            try:
+                info_used = self.db['utils'].find_one({"_id": 1}, {'info_used': 1, "_id": 0}).get('info_used', [])
+            except:
+                info_used = []
             self.logger.debug("[reconcile_ids] info_used %s", info_used)
             if len(info_used) > 0:
                 for k in info_used:
@@ -642,3 +655,14 @@ class Recommender(object):
                 if len(result) > n:
                     break
             return result
+
+
+    def drop_db(self):
+        """
+        Drop the whole db, unsafe!
+        Return list of collections
+        :return:
+        """
+        if self.db:
+            self.mongo_client.drop_database(self.mongo_db_name)
+            return self.db.collection_names()
