@@ -1,1 +1,34 @@
+v 3.12
+
+* Bug fixed
+
+v 3.11
+
+* Some debugs messsages added
+
+v 3.10
+
+* Categories can now be lists (or passed as string which are json-parseable as list).
+  This is important for, eg, tags which can now be passed in a REST API as:
+
+      curl -X POST "http://127.0.0.1:8081/insertitem?id=Boo2&author=TheAuthor&cathegory=Horror&tags=['mio','nostro']"
+
+* Fixed bug in recommender_api example file
+
+v 3.8
+
+* Sync categories' users and items collections in get_recommendations
+
+v 3.7
+
+Bug fixing for in-memory
+
+v 3.5
+
+* Added logging
+* Added creation of collections for super-cold start (not even one rating, and still user asking for recommendations...)
+* Additional info used for recommendations (eg Authors etc) are now stored in the DB
+* _sync_user_item_ratings now syncs addition info's collections too
+* popular_items now are always returned, even in case of no rating done, and get_recommendations eventually adjusts the order if some profiling has been done 
+
 v0.1, 7/28/2014 -- Initial Release
