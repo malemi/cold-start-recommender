@@ -4,15 +4,16 @@ import numpy as np
 from time import time
 import logging
 import json
-from tools.Borg import Borg
+from tools.Singleton import Singleton
 
-class Recommender(Borg):
+class Recommender(Singleton):
     """
     Cold Start Recommender
     """
     def __init__(self, mongo_host=None, mongo_db_name=None, mongo_replica_set=None,
                  default_rating=3, max_rating=5,
                  log_level=logging.ERROR):
+
         if mongo_host is not None:
             assert (mongo_db_name != None)
             if mongo_replica_set is not None:
@@ -65,8 +66,6 @@ class Recommender(Borg):
             self.logger.debug("============ Host: %s", str(mongo_host))
             if mongo_replica_set is not None:
                 self.logger.debug("============ Replica: %s", str(mongo_replica_set))
-
-
 
     def _coll_name(self, k, typ):
         """

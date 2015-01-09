@@ -96,12 +96,13 @@ app = webapp2.WSGIApplication([
     ('/reconcile', Reconcile),
     ('/info', Info),
     ('/items', GetItems),
-], debug=True)
+], debug=False)
+
 
 def main():
     global engine
     from paste import httpserver
-    httpserver.serve(app, host='127.0.0.1', port='8081')
+    httpserver.serve(app, host='127.0.0.1', port='8081', use_threadpool=True, threadpool_workers=10)
 
 if __name__ == '__main__':
     main()

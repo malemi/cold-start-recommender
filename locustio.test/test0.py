@@ -4,10 +4,10 @@ import random
 random.seed(0)
 
 class RecommTaskSet(TaskSet):
-    min_wait = 5000
-    max_wait = 10000
+    min_wait = 2000
+    max_wait = 5000
 
-    @task(1)
+    @task(10)
     def insert_items(self):
         """
         insert item and rating
