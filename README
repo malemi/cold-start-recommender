@@ -17,7 +17,7 @@ with the following characteristics:
     recommendations for this User, but also for other Users. This
     means  in-memory database and no batch computations.
 
-* **Ready to use.** Take a look at bin/recommender_api.py to start
+* **Ready to use.** Take a look at recommender_api.py to start
     a webapp that POSTs information and GETs recommendations.
 
 
@@ -163,7 +163,7 @@ Added self.drop_db
 * Categories can now be a list (or passed as json-parseable string).
   This is important for, eg, tags which can now be passed in a REST API as:
 
-      curl -X POST "http://127.0.0.1:8081/insertitem?id=Boo2&author=TheAuthor&cathegory=Horror&tags=['scary','terror']"
+      curl -X POST "http://127.0.0.1:8081/insertitem?id=Boo2&author=TheAuthor&cathegory=Horror&tags=scary,terror"
 
 * Fixed bug in recommender_api example file
 

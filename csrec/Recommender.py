@@ -4,8 +4,9 @@ import numpy as np
 from time import time
 import logging
 import json
+from tools.Borg import Borg
 
-class Recommender(object):
+class Recommender(Borg):
     """
     Cold Start Recommender
     """

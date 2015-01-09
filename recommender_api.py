@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+
 import webapp2
 from csrec.Recommender import Recommender
 import csrec
@@ -36,7 +37,7 @@ class InsertRating(webapp2.RequestHandler):
 class InsertItem(webapp2.RequestHandler):
     """
     e.g.:
-    curl -X POST  'localhost:8081/insertitem?id=Book1&author=TheAuthor&cathegory=Horror'
+    curl -X POST  'localhost:8081/insertitem?id=Book1&author=TheAuthor&cathegory=Horror&tags=scary,terror'
     """
     def post(self):
         global engine
@@ -45,7 +46,7 @@ class InsertItem(webapp2.RequestHandler):
             item[i[0]] = i[1]
         #self.response.write(item)
         engine.insert_item(item, _id='id')
-        
+
 
 class Recommend(webapp2.RequestHandler):
     """
@@ -75,7 +76,7 @@ class Info(webapp2.RequestHandler):
         global engine
         user = self.request.get('user')
         self.response.write(engine.get_user_info(user))
-        
+
 
 class GetItems(webapp2.RequestHandler):
     """

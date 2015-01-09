@@ -8,5 +8,5 @@ setup(name='cold-start-recommender',
       py_modules=['csrec.Recommender'],
       url='https://github.com/elegans-io/cold-start-recommender',
       license='LICENSE.txt',
-      scripts=['bin/recommender_api.py'],
+      scripts=['recommender_api.py'],
       )
