@@ -12,7 +12,7 @@ class Recommender(Singleton):
     """
     def __init__(self, mongo_host=None, mongo_db_name=None, mongo_replica_set=None,
                  default_rating=3, max_rating=5,
-                 log_level=logging.ERROR):
+                 log_level=logging.DEBUG):
 
         if mongo_host is not None:
             assert (mongo_db_name != None)
@@ -60,7 +60,7 @@ class Recommender(Singleton):
         self.items_by_popularity_updated = 0.0  # Time of update
         # Loggin stuff
         self.logger = logging.getLogger("csrc")
-        self.logger.setLevel(logging.DEBUG)
+        self.logger.setLevel(log_level)
         self.logger.debug("============ Creating a Recommender Instance ================")
         if mongo_host is not None:
             self.logger.debug("============ Host: %s", str(mongo_host))
@@ -268,8 +268,10 @@ class Recommender(Singleton):
         As per name, get self.
         :return: list of popular items, 0=most popular
         """
-        if fast and (time() - self.most_popular_items_updated) < 3600:
+        if fast and (time() - self.items_by_popularity_updated) < 1800:
             return self.items_by_popularity
+        else:
+            self.items_by_popularity_updated = time()
 
         if not self.db:
             df_item = pd.DataFrame(self.item_ratings).fillna(0).astype(int).sum()
@@ -618,7 +620,6 @@ class Recommender(Singleton):
             return [i for i in global_rec.index if not rated.get(i, False)][:max_recs]
         else:
             return list(global_rec.index)[:max_recs]
-
 
     def get_user_info(self, user_id):
         """

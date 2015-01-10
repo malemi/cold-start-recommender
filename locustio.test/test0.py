@@ -30,7 +30,7 @@ class RecommTaskSet(TaskSet):
 
         self.client.post("/insertitem",data={'id':item_name,'author':item_author, 'cathegory':item_categ,'tags':item_tags})
         self.client.post("/insertrating",data={'item':item_name,'user':user_id,'rating':user_rating_num})
-        response = self.client.get("/recommend",data={'user':user_id})
+        response = self.client.get("/recommend",data={'user':user_id, 'fast':True})
         #print "Response status code:", response.status_code
         #print "Response content:", response.content
 
