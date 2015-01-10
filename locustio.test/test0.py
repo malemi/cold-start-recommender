@@ -1,7 +1,7 @@
 from locust import HttpLocust, Locust, TaskSet, task
 import random
 
-random.seed(0)
+#random.seed(0)
 
 class RecommTaskSet(TaskSet):
     min_wait = 2000

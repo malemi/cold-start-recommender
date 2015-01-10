@@ -30,5 +30,5 @@ plugins = PluginManager()
 import logging
 from csrec.Recommender import Recommender
 
-engine = Recommender()
-#engine = Recommender(mongo_host="localhost:27017", mongo_db_name="csrec", log_level=logging.ERROR)
+#engine = Recommender()
+engine = Recommender(mongo_host="localhost:27017", mongo_db_name="csrec", log_level=logging.ERROR)

@@ -143,8 +143,6 @@ class Recommender(Singleton):
                                     upsert=True
                                 )
 
-
-
     def insert_item(self, item, _id="_id"):
         """
         Insert the whole document either in self.items or in db.items.
@@ -161,7 +159,6 @@ class Recommender(Singleton):
                     self.db["items"].update({"_id": item[_id]},
                                             {"$set": {k: v}},
                                             upsert=True)
-
 
     def reconcile_ids(self, id_old, id_new):
         """
@@ -402,8 +399,8 @@ class Recommender(Singleton):
         else:
             # If the item is not stored, we don't have its categories
             # Therefore do categories only if the item is found stored
-            if self.db['items'].find_one({"_id": item_id}):
-                item = self.db['items'].find_one({"_id": item_id})
+            item = self.db['items'].find_one({"_id": item_id})
+            if item:
                 if len(item_info) > 0:
                     self.logger.debug('[insert_rating] Looking for the following info: %s', item_info)
                     for k, v in item.items():
@@ -540,7 +537,7 @@ class Recommender(Singleton):
                 # but the co-occurence matrix has not been updated
                 # therefore the matrix and the user-vector have different
                 # dimension
-                if not fast or (time() - self.cooccurence_updated > 3600):
+                if not fast or (time() - self.cooccurence_updated > 1800):
                     self._create_cooccurence()
                 rec = self._items_cooccurence.T.dot(df_user[user_id])
                 self.logger.debug("[get_recommendations] Rec: %s", rec)
