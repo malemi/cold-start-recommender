@@ -402,12 +402,8 @@ class Recommender():
             if item:
                 if len(item_info) > 0:
                     self.logger.debug('[insert_rating] Looking for the following info: %s', item_info)
-                    item_items = item.items()
-                    for i_info in item_info:
-                        if item_items.has_key(i_info):
-                            k = i_info
-                            v = item_items[k]
-
+                    for k, v in item.items():
+                        if k in item_info and v is not None:  # sometimes the value IS None
                             self.logger.debug("[insert_rating] Adding %s to info_used and create relative collections",
                                               k)
 
