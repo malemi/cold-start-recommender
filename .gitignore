@@ -21,6 +21,9 @@ var/
 .installed.cfg
 *.egg
 
+#IDEA
+.idea/
+
 # Installer logs
 pip-log.txt
 pip-delete-this-directory.txt
