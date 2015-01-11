@@ -146,6 +146,10 @@ provide recommendations in less than 200msec for a matrix of about
 Versions
 --------
 
+**v 3.14**
+
+Fixed logging and bug for computing cooccurrence matrix
+
 **v 3.13**
 
 Added self.drop_db
