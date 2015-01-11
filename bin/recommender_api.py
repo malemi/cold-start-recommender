@@ -3,7 +3,6 @@
 import webapp2
 from csrec.Recommender import Recommender
 import csrec
-import logging
 
 """
 Usage:
@@ -14,7 +13,6 @@ Start a webapp for testing the recommender.
 """
 
 engine = Recommender()
-#engine = Recommender(mongo_host="localhost:27017", mongo_db_name="csrec", log_level=logging.ERROR)
 
 class MainPage(webapp2.RequestHandler):
     def get(self):
