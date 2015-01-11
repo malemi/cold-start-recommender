@@ -60,6 +60,9 @@ class Recommender():
         # Loggin stuff
         self.logger = logging.getLogger("csrc")
         self.logger.setLevel(log_level)
+        ch = logging.StreamHandler()
+        ch.setLevel(logging.DEBUG)
+        self.logger.addHandler(ch)
         self.logger.debug("============ Creating a Recommender Instance ================")
         if mongo_host is not None:
             self.logger.debug("============ Host: %s", str(mongo_host))
