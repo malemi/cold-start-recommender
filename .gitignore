@@ -22,7 +22,7 @@ var/
 *.egg
 
 #IDEA
-.idea/
+.idea
 
 # Installer logs
 pip-log.txt
