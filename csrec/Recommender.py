@@ -4,8 +4,9 @@ import numpy as np
 from time import time
 import logging
 import json
+from tools.Singleton import Singleton
 
-class Recommender():
+class Recommender(Singleton):
     """
     Cold Start Recommender
     """
@@ -13,33 +14,6 @@ class Recommender():
                  default_rating=3, max_rating=5,
                  log_level=logging.DEBUG):
 
-        if mongo_host is not None:
-            assert (mongo_db_name != None)
-            if mongo_replica_set is not None:
-                from pymongo import MongoReplicaSetClient
-                self.mongo_host = mongo_host
-                self.mongo_replica_set = mongo_replica_set
-                self.mongo_db_name = mongo_db_name
-                self.mongo_client = MongoReplicaSetClient(self.mongo_host,
-                                                          replicaSet=self.mongo_replica_set)
-                self.db = self.mongo_client[self.mongo_db_name]
-                # reading --for producing recommendations-- could be even out of sync.
-                # this can be added if most replicas are in-memory
-                # self.db.read_preference = ReadPreference.SECONDARY_PREFERRED
-            else:
-                from pymongo import MongoClient
-                self.mongo_host = mongo_host
-                self.mongo_replica_set = mongo_replica_set
-                self.mongo_db_name = mongo_db_name
-                self.mongo_client = MongoClient(self.mongo_host)
-                self.db = self.mongo_client[self.mongo_db_name]
-            # If these tables do not exist, it might create problems
-            if not self.db['user_ratings'].find_one():
-                self.db['user_ratings'].insert({})
-            if not self.db['item_ratings'].find_one():
-                self.db['item_ratings'].insert({})
-        else:
-            self.db = None
         self.info_used = set() # Info used in addition to item_id. Only for in-memory testing, otherwise there is utils collection in the MongoDB
         self.default_rating = default_rating  # Rating inserted by default
         self.max_rating = max_rating
@@ -64,10 +38,37 @@ class Recommender():
         ch.setLevel(logging.DEBUG)
         self.logger.addHandler(ch)
         self.logger.debug("============ Creating a Recommender Instance ================")
+        self.db = None
+
         if mongo_host is not None:
             self.logger.debug("============ Host: %s", str(mongo_host))
             if mongo_replica_set is not None:
                 self.logger.debug("============ Replica: %s", str(mongo_replica_set))
+
+            assert (mongo_db_name is not None)
+            if mongo_replica_set is not None:
+                from pymongo import MongoReplicaSetClient
+                self.mongo_host = mongo_host
+                self.mongo_replica_set = mongo_replica_set
+                self.mongo_db_name = mongo_db_name
+                self.mongo_client = MongoReplicaSetClient(self.mongo_host,
+                                                          replicaSet=self.mongo_replica_set)
+                self.db = self.mongo_client[self.mongo_db_name]
+                # reading --for producing recommendations-- could be even out of sync.
+                # this can be added if most replicas are in-memory
+                # self.db.read_preference = ReadPreference.SECONDARY_PREFERRED
+            else:
+                from pymongo import MongoClient
+                self.mongo_host = mongo_host
+                self.mongo_replica_set = mongo_replica_set
+                self.mongo_db_name = mongo_db_name
+                self.mongo_client = MongoClient(self.mongo_host)
+                self.db = self.mongo_client[self.mongo_db_name]
+            # If these tables do not exist, it might create problems
+            if not self.db['user_ratings'].find_one():
+                self.db['user_ratings'].insert({})
+            if not self.db['item_ratings'].find_one():
+                self.db['item_ratings'].insert({})
 
     def _coll_name(self, k, typ):
         """
@@ -95,9 +96,11 @@ class Recommender():
             df_item = pd.DataFrame.from_records(list(self.db['user_ratings'].find())).set_index('_id').fillna(0).astype(int)
             try:
                 info_used = self.db['utils'].find_one({"_id": 1}, {'info_used': 1, "_id": 0}).get('info_used', [])
+                self.logger.info("[_create_cooccurence] Found info_used already in db.utils: %s", info_used)
             except:
                 info_used = []
-            self.logger.info("[_create_cooccurence] Found info_used in db.utils: %s", info_used)
+                self.logger.info("[_create_cooccurence] No info_used in db.utils, setting = []")
+
             if len(info_used) > 0:
                 for i in info_used:
                     user_coll_name = self._coll_name(i, 'user')
@@ -221,9 +224,10 @@ class Recommender():
 
             try:
                 info_used = self.db['utils'].find_one({"_id": 1}, {'info_used': 1, "_id": 0}).get('info_used', [])
+                self.logger.debug("[reconcile_ids] info_used %s", info_used)
             except:
                 info_used = []
-            self.logger.debug("[reconcile_ids] info_used %s", info_used)
+                self.logger.debug("[reconcile_ids] info_used not found, setting []", info_used)
             if len(info_used) > 0:
                 for k in info_used:
                     users_coll_name = self._coll_name(k, 'user')
@@ -325,7 +329,7 @@ class Recommender():
                 {"_id": item_id, user_id: {"$exists": True}})
 
 
-    def insert_rating(self, user_id, item_id, rating=3, item_info=[], only_info=False):
+    def insert_rating(self, user_id, item_id, rating=3, item_info=None, only_info=False):
         """
         item is treated as item_id if it is not a dict, otherwise we look
         for a key called item_id_key if it is a dict.
@@ -347,6 +351,8 @@ class Recommender():
         :param only_info: not used yet
         :return: [recommended item_id_values]
         """
+        if not item_info:
+            item_info = []
         # If only_info==True, only the item_info's are put in the co-occurence, not item_id.
         # This is necessary when we have for instance a "segmentation page" where we propose
         # well known items to get to know the user. If s/he select "Harry Potter" we only want
@@ -382,14 +388,14 @@ class Recommender():
                             # 1) we don't want ratings for category to skyrocket, so we have to take the average
                             # 2) if a user changes their idea on rating a book, it should not add up. Average
                             #   is not perfect, but close enough. Take total number of ratings and total rating
-                            for v in values:
-                                if len(str(v)) > 0:
-                                    self.tot_categories_user_ratings[k][user_id][v] += int(rating)
-                                    self.n_categories_user_ratings[k][user_id][v] += 1
+                            for value in values:
+                                if len(str(value)) > 0:
+                                    self.tot_categories_user_ratings[k][user_id][value] += int(rating)
+                                    self.n_categories_user_ratings[k][user_id][value] += 1
                                     # for the co-occurence matrix is not necessary to do the same for item, but better do it
                                     # in case we want to compute similarities etc using categories
-                                    self.tot_categories_item_ratings[k][v][user_id] += int(rating)
-                                    self.n_categories_item_ratings[k][v][user_id] += 1
+                                    self.tot_categories_item_ratings[k][value][user_id] += int(rating)
+                                    self.n_categories_item_ratings[k][value][user_id] += 1
 
             else:
                 self.insert_item({"_id": item_id})
@@ -428,23 +434,23 @@ class Recommender():
                                 values = [str(i) for i in v]  # It's going to be a key, no numbers
 
                             # see comments above
-                            for v in values:
-                                if len(v) > 0:
+                            for value in values:
+                                if len(value) > 0:
                                     self.db['tot_' + users_coll_name].update({'_id': user_id},
-                                                                             {'$inc': {v: float(rating)}},
+                                                                             {'$inc': {value: float(rating)}},
                                                                               upsert=True)
                                     self.db['n_' + users_coll_name].update({'_id': user_id},
-                                                   {'$inc': {v: 1}},
+                                                   {'$inc': {value: 1}},
                                                     upsert=True)
-                                    self.db['tot_' + items_coll_name].update({'_id': v},
+                                    self.db['tot_' + items_coll_name].update({'_id': value},
                                                    {'$inc': {user_id: float(rating)}},
                                                     upsert=True)
-                                    self.db['n_' + items_coll_name].update({'_id': v},
+                                    self.db['n_' + items_coll_name].update({'_id': value},
                                                    {'$inc': {user_id: 1}},
                                                     upsert=True)
                                     self.db['items'].update(
                                         {"_id": item_id},
-                                        {"$set": {k: v}},
+                                        {"$set": {k: value}},
                                         upsert=True
                                     )
             else:
@@ -486,6 +492,7 @@ class Recommender():
         rec = pd.Series()
         item_based = False  # has user rated some items?
         info_based = []  # user has rated the category (e.g. the category "author" etc)
+        df_user = None
         if not self.db:
             if self.user_ratings.get(user_id):  # compute item-based rec only if user has rated smt
                 item_based = True
@@ -541,6 +548,9 @@ class Recommender():
                 # dimension
                 if not fast or (time() - self.cooccurence_updated > 1800):
                     self._create_cooccurence()
+                self.logger.debug("[get_recommendations] Trying cooccurence dot df_user")
+                self.logger.debug("[get_recommendations] _items_cooccurence: %s", self._items_cooccurence)
+                self.logger.debug("[get_recommendations] df_user: %s", df_user)
                 rec = self._items_cooccurence.T.dot(df_user[user_id])
                 self.logger.debug("[get_recommendations] Rec: %s", rec)
             except:
