@@ -93,7 +93,7 @@ class Recommender(Singleton):
             df_item = pd.DataFrame.from_records(list(self.db['user_ratings'].find())).set_index('_id').fillna(0).astype(int)
             try:
                 info_used = self.db['utils'].find_one({"_id": 1}, {'info_used': 1, "_id": 0}).get('info_used', [])
-                self.logger.info("[_create_cooccurence] Found info_used in db.utils: %s", info_used)
+                self.logger.info("[_create_cooccurence] Found info_used already in db.utils: %s", info_used)
             except:
                 info_used = []
                 self.logger.info("[_create_cooccurence] No info_used in db.utils, setting = []")
@@ -221,9 +221,10 @@ class Recommender(Singleton):
 
             try:
                 info_used = self.db['utils'].find_one({"_id": 1}, {'info_used': 1, "_id": 0}).get('info_used', [])
+                self.logger.debug("[reconcile_ids] info_used %s", info_used)
             except:
                 info_used = []
-            self.logger.debug("[reconcile_ids] info_used %s", info_used)
+                self.logger.debug("[reconcile_ids] info_used not found, setting []", info_used)
             if len(info_used) > 0:
                 for k in info_used:
                     users_coll_name = self._coll_name(k, 'user')
