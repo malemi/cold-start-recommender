@@ -34,6 +34,9 @@ class Recommender(Singleton):
         # Loggin stuff
         self.logger = logging.getLogger("csrc")
         self.logger.setLevel(log_level)
+        ch = logging.StreamHandler()
+        ch.setLevel(logging.DEBUG)
+        self.logger.addHandler(ch)
         self.logger.debug("============ Creating a Recommender Instance ================")
         self.db = None
 
