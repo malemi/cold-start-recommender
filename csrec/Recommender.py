@@ -17,9 +17,9 @@ class Recommender(Singleton):
         self.info_used = set() # Info used in addition to item_id. Only for in-memory testing, otherwise there is utils collection in the MongoDB
         self.default_rating = default_rating  # Rating inserted by default
         self.max_rating = max_rating
-        self._items_cooccurence = pd.DataFrame  # cooccurrence of items
-        self._categories_cooccurence = {} # cooccurrence of categories
-        self.cooccurence_updated = 0.0  # Time of update
+        self._items_cooccurrence = pd.DataFrame  # cooccurrence of items
+        self._categories_cooccurrence = {} # cooccurrence of categories
+        self.cooccurrence_updated = 0.0  # Time of update
         self.item_ratings = defaultdict(dict)  # matrix of ratings for a item (inmemory testing)
         self.user_ratings = defaultdict(dict)  # matrix of ratings for a user (inmemory testing)
         self.items = defaultdict(dict)  # matrix of item's information {item_id: {"Author": "AA. VV."....}
@@ -77,9 +77,9 @@ class Recommender(Singleton):
         return str(typ) + '_' + str(k) + '_ratings'
 
 
-    def _create_cooccurence(self):
+    def _create_cooccurrence(self):
         """
-        Create or update the co-occurence matrix
+        Create or update the co-occurrence matrix
         :return:
         """
         df_tot_cat_item = {}
@@ -96,24 +96,24 @@ class Recommender(Singleton):
             df_item = pd.DataFrame.from_records(list(self.db['user_ratings'].find())).set_index('_id').fillna(0).astype(int)
             try:
                 info_used = self.db['utils'].find_one({"_id": 1}, {'info_used': 1, "_id": 0}).get('info_used', [])
-                self.logger.info("[_create_cooccurence] Found info_used already in db.utils: %s", info_used)
+                self.logger.info("[_create_cooccurrence] Found info_used already in db.utils: %s", info_used)
             except:
                 info_used = []
-                self.logger.info("[_create_cooccurence] No info_used in db.utils, setting = []")
+                self.logger.info("[_create_cooccurrence] No info_used in db.utils, setting = []")
 
             if len(info_used) > 0:
                 for i in info_used:
                     user_coll_name = self._coll_name(i, 'user')
                     if self.db['tot_' + user_coll_name].find_one():
                         df_tot_cat_item[i] = pd.DataFrame.from_records(list(self.db['tot_' + user_coll_name].find())).set_index('_id').fillna(0).astype(int)
-        df_item = (df_item / df_item).replace(np.inf, 0)  # normalize to one to build the co-occurence
-        self._items_cooccurence = df_item.T.dot(df_item)
+        df_item = (df_item / df_item).replace(np.inf, 0)  # normalize to one to build the co-occurrence
+        self._items_cooccurrence = df_item.T.dot(df_item)
         if len(info_used) > 0:
             for i in info_used:
                 if type(df_tot_cat_item.get(i)) == pd.DataFrame:
                     df_tot_cat_item[i] = (df_tot_cat_item[i] / df_tot_cat_item[i]).replace(np.inf, 0)
-                    self._categories_cooccurence[i] = df_tot_cat_item[i].T.dot(df_tot_cat_item[i])
-        self.cooccurence_updated = time()
+                    self._categories_cooccurrence[i] = df_tot_cat_item[i].T.dot(df_tot_cat_item[i])
+        self.cooccurrence_updated = time()
 
 
     def _sync_user_item_ratings(self):
@@ -148,6 +148,7 @@ class Recommender(Singleton):
                                     upsert=True
                                 )
 
+
     def insert_item(self, item, _id="_id"):
         """
         Insert the whole document either in self.items or in db.items.
@@ -165,10 +166,11 @@ class Recommender(Singleton):
                                             {"$set": {k: v}},
                                             upsert=True)
 
+
     def reconcile_ids(self, id_old, id_new):
         """
         Create id_new if not there, add data of id_old into id_new.
-        Compute the co-occurence matrix.
+        Compute the co-occurrence matrix.
         NB id_old is removed!
         :param id_new:
         :param id_old:
@@ -263,7 +265,7 @@ class Recommender(Singleton):
                         {"$rename": {"id_new": "id_old"}},
                         multi=True
                     )
-        self._create_cooccurence()
+        self._create_cooccurrence()
 
 
     def compute_items_by_popularity(self, max_items=10, fast=False):
@@ -292,10 +294,11 @@ class Recommender(Singleton):
                 all_items = set([ d["_id"] for d in self.db['items'].find({}, {"_id": 1})])
             self.items_by_popularity = pop_items + list( all_items - set(pop_items) )
 
+
     def get_similar_item(self, item_id, user_id=None, algorithm='simple'):
         """
         TODO
-        Simple: return the row of the co-occurence matrix ordered by score or,
+        Simple: return the row of the co-occurrence matrix ordered by score or,
         if user_id is not None, multiplied times the user_id rating
         (not transposed!) so to weigh the similarity score with the
         rating of the user
@@ -339,7 +342,7 @@ class Recommender(Singleton):
 
         NB NO DOTS IN user_id, or they will taken away. Fields in mongodb cannot have dots..
 
-        If only_info==True, only the item_info's are put in the co-occurence, not item_id.
+        If only_info==True, only the item_info's are put in the co-occurrence, not item_id.
          This is necessary when we have for instance a "segmentation page" where we propose
          well known items to get to know the user. If s/he select "Harry Potter" we only want
          to retrieve the info that s/he likes JK Rowling, narrative, magic etc
@@ -353,7 +356,7 @@ class Recommender(Singleton):
         """
         if not item_info:
             item_info = []
-        # If only_info==True, only the item_info's are put in the co-occurence, not item_id.
+        # If only_info==True, only the item_info's are put in the co-occurrence, not item_id.
         # This is necessary when we have for instance a "segmentation page" where we propose
         # well known items to get to know the user. If s/he select "Harry Potter" we only want
         # to retrieve the info that s/he likes JK Rowling, narrative, magic etc
@@ -392,7 +395,7 @@ class Recommender(Singleton):
                                 if len(str(value)) > 0:
                                     self.tot_categories_user_ratings[k][user_id][value] += int(rating)
                                     self.n_categories_user_ratings[k][user_id][value] += 1
-                                    # for the co-occurence matrix is not necessary to do the same for item, but better do it
+                                    # for the co-occurrence matrix is not necessary to do the same for item, but better do it
                                     # in case we want to compute similarities etc using categories
                                     self.tot_categories_item_ratings[k][value][user_id] += int(rating)
                                     self.n_categories_item_ratings[k][value][user_id] += 1
@@ -472,17 +475,16 @@ class Recommender(Singleton):
     def get_recommendations(self, user_id, max_recs=50, fast=False, algorithm='item_based'):
         """
         algorithm item_based:
-            - Compute recommendation to user using item co-occurence matrix (if the user
+            - Compute recommendation to user using item co-occurrence matrix (if the user
             rated any item...)
             - If there are less than max_recs recommendations, the remaining
             items are given according to popularity. Scores for the popular ones
-            are given as
-                            score[last recommended]*index[last recommended]/n
+            are given as score[last recommended]*index[last recommended]/n
             where n is the position in the list.
             - Recommended items above receive a further score according to categories
         :param user_id: the user id as in the mongo collection 'users'
         :param max_recs: number of recommended items to be returned
-        :param fast: Compute the co-occurence matrix only if it is one hour old or
+        :param fast: Compute the co-occurrence matrix only if it is one hour old or
                      if matrix and user vector have different dimension
         :return: list of recommended items
         """
@@ -543,27 +545,27 @@ class Recommender(Singleton):
         if item_based:
             try:
                 # this might fail for fast in case a user has rated an item
-                # but the co-occurence matrix has not been updated
+                # but the co-occurrence matrix has not been updated
                 # therefore the matrix and the user-vector have different
                 # dimension
-                if not fast or (time() - self.cooccurence_updated > 1800):
-                    self._create_cooccurence()
-                self.logger.debug("[get_recommendations] Trying cooccurence dot df_user")
-                self.logger.debug("[get_recommendations] _items_cooccurence: %s", self._items_cooccurence)
+                if not fast or (time() - self.cooccurrence_updated > 1800):
+                    self._create_cooccurrence()
+                self.logger.debug("[get_recommendations] Trying cooccurrence dot df_user")
+                self.logger.debug("[get_recommendations] _items_cooccurrence: %s", self._items_cooccurrence)
                 self.logger.debug("[get_recommendations] df_user: %s", df_user)
-                rec = self._items_cooccurence.T.dot(df_user[user_id])
+                rec = self._items_cooccurrence.T.dot(df_user[user_id])
                 self.logger.debug("[get_recommendations] Rec: %s", rec)
             except:
-                self.logger.debug("[get_recommendations] 1st rec production failed, calling _create_cooccurence.")
+                self.logger.debug("[get_recommendations] 1st rec production failed, calling _create_cooccurrence.")
                 try:
-                    self._create_cooccurence()
-                    rec = self._items_cooccurence.T.dot(df_user[user_id])
+                    self._create_cooccurrence()
+                    rec = self._items_cooccurrence.T.dot(df_user[user_id])
                     self.logger.debug("[get_recommendations] Rec: %s", rec)
                 except:
                     self.logger.warning("[get_recommendations] user_ and item_ratings seem not synced")
                     self._sync_user_item_ratings()
-                    self._create_cooccurence()
-                    rec = self._items_cooccurence.T.dot(df_user[user_id])
+                    self._create_cooccurrence()
+                    rec = self._items_cooccurrence.T.dot(df_user[user_id])
                     self.logger.debug("[get_recommendations] Rec: %s", rec)
 
             # Add to rec items according to popularity
@@ -595,12 +597,12 @@ class Recommender(Singleton):
                 user_vec = df_tot_cat_user[cat][user_id] / df_n_cat_user[cat][user_id].replace(0, 1)
                 # print "DEBUG get_recommendations. user_vec:\n", user_vec
                 try:
-                    cat_rec[cat] = self._categories_cooccurence[cat].T.dot(user_vec)
+                    cat_rec[cat] = self._categories_cooccurrence[cat].T.dot(user_vec)
                     cat_rec[cat].sort(ascending=False)
                     #self.logger.debug("[get_recommendations] cat_rec (try):\n %s", cat_rec)
                 except:
-                    self._create_cooccurence()
-                    cat_rec[cat] = self._categories_cooccurence[cat].T.dot(user_vec)
+                    self._create_cooccurrence()
+                    cat_rec[cat] = self._categories_cooccurrence[cat].T.dot(user_vec)
                     cat_rec[cat].sort(ascending=False)
                     #self.logger.debug("[get_recommendations] cat_rec (except):\n %s", cat_rec)
                 for k, v in rec.iteritems():
@@ -629,6 +631,7 @@ class Recommender(Singleton):
             return [i for i in global_rec.index if not rated.get(i, False)][:max_recs]
         else:
             return list(global_rec.index)[:max_recs]
+
 
     def get_user_info(self, user_id):
         """
