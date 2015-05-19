@@ -163,7 +163,7 @@ class Recommender(Singleton):
             for k, v in item.items():
                 if k is not "_id":
                     self.db["items"].update({"_id": item[_id]},
-                                            {"$set": {k: v}},
+                                            {"$set": {k: str(v)}},
                                             upsert=True)
 
 
