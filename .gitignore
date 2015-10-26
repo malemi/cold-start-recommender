@@ -2,6 +2,8 @@
 __pycache__/
 *.py[cod]
 
+.idea/
+
 # C extensions
 *.so
 
@@ -20,6 +22,9 @@ var/
 *.egg-info/
 .installed.cfg
 *.egg
+MANIFEST
+#IDEA
+.idea/
 
 # Installer logs
 pip-log.txt
